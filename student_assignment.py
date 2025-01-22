@@ -1,3 +1,5 @@
+from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate, MessagesPlaceholder
+
 from model_configurations import get_model_configuration
 
 from langchain_openai import AzureChatOpenAI
@@ -14,7 +16,36 @@ llm = AzureChatOpenAI(
     azure_endpoint=gpt_config['api_base'],
     temperature=gpt_config['temperature']
 )
+examples = [{
+        "input": "今年台灣10月紀念日有哪些?",
+        "output": """{
+            "Result": [
+                {
+                    "date": "2024-10-10",
+                    "name": "國慶日"
+                }
+            ]}"""}
+]
 
+example_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("human", "{input}"),
+        ("ai", "{output}"),
+    ]
+)
+few_shot_prompt = FewShotChatMessagePromptTemplate(
+    example_prompt=example_prompt,
+    examples=examples,
+)
+final_prompt = ChatPromptTemplate.from_messages(
+    [
+        ("system", "You know all the holidays, and you will only return valid JSON without enclosing it in '''json'''"),
+        few_shot_prompt,
+        MessagesPlaceholder(variable_name="history", optional=True),
+        ("human", "{input}"),
+        MessagesPlaceholder("agent_scratchpad", optional=True),
+    ]
+)
 
 def generate_hw01(question):
     response = llm.invoke([
@@ -48,3 +79,4 @@ def generate_hw04(question):
 #     response = llm.invoke([message])
 #
 #     return response
+print(generate_hw01('2024年台灣10月紀念日有哪些?'))
