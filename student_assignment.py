@@ -58,6 +58,7 @@ def get_session(session_id: str) -> BaseChatMessageHistory:
 def get_holiday(month):
     api_url = f"https://calendarific.com/api/v2/holidays?&api_key=baa9dc110aa712sd3a9fa2a3dwb6c01d4c875950dc32vs&country=TW&year=2024&month={month}"
     response = requests.get(api_url)
+    print(response.status_code)
     return response.json()
 
 
@@ -69,6 +70,9 @@ def generate_hw01(question):
 
 @tool
 def generate_hw02(question):
+    """
+    This function answers questions about holidays in Taiwan for a specific month.
+    """
     tools = [get_holiday]
     agent = create_openai_functions_agent(
         llm=llm,
@@ -134,5 +138,4 @@ def generate_hw04(question):
 #
 #     return response
 print(generate_hw01('2024年台灣10月紀念日有哪些?'))
-
 print(generate_hw04('請問中華台北的積分是多少'))
