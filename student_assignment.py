@@ -1,13 +1,18 @@
 import base64
 
+from langchain.agents import create_openai_functions_agent, AgentExecutor
+from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate, MessagesPlaceholder
 
 from model_configurations import get_model_configuration
 
 from langchain_openai import AzureChatOpenAI
 from langchain_core.messages import HumanMessage
+
 gpt_chat_version = 'gpt-4o'
 gpt_config = get_model_configuration(gpt_chat_version)
+
+from tools import holiday_data
 
 llm = AzureChatOpenAI(
     model=gpt_config['model_name'],
@@ -18,8 +23,8 @@ llm = AzureChatOpenAI(
     temperature=gpt_config['temperature']
 )
 examples = [{
-        "input": "今年台灣10月紀念日有哪些?",
-        "output": """{"Result": [{"date": "2024-10-10","name": "國慶日"}]}"""}
+    "input": "今年台灣10月紀念日有哪些?",
+    "output": """{"Result": [{"date": "2024-10-10","name": "國慶日"}]}"""}
 ]
 
 example_prompt = ChatPromptTemplate.from_messages(
@@ -41,15 +46,33 @@ final_prompt = ChatPromptTemplate.from_messages(
         MessagesPlaceholder("agent_scratchpad", optional=True),
     ]
 )
+history = {}
+
+
+def get_session(session_id: str) -> BaseChatMessageHistory:
+    if session_id not in history:
+        history[session_id] = InMemoryChatMessageHistory()
+    return history[session_id]
+
 
 def generate_hw01(question):
     chain = final_prompt | llm
     response = chain.invoke({"input": question})
 
     return response.content
+
+
 def generate_hw02(question):
-    pass
-    
+    tools = [holiday_data]
+    agent = create_openai_functions_agent(
+        llm=llm,
+        prompt=final_prompt,
+        tools=tools,
+    )
+    agent_executor = AgentExecutor(agent=agent, tools=tools)
+    response = agent_executor.invoke({"input": question})
+    return response["output"]
+
 def generate_hw03(question2, question3):
     pass
 
@@ -57,6 +80,8 @@ def generate_hw03(question2, question3):
 def load_image(image_path):
     with open(image_path, 'rb') as image_file:
         return base64.b64encode(image_file.read()).decode("utf-8")
+
+
 def generate_hw04(question):
     """
     Extracts score for a specified team from a given scoreboard image.
@@ -83,6 +108,7 @@ def generate_hw04(question):
     response = llm.invoke(messages)
     return response.content
 
+
 # def demo(question):
 #     llm = AzureChatOpenAI(
 #             model=gpt_config['model_name'],
@@ -101,6 +127,5 @@ def generate_hw04(question):
 #
 #     return response
 print(generate_hw01('2024年台灣10月紀念日有哪些?'))
-
 
 print(generate_hw04('請問中華台北的積分是多少'))
