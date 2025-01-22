@@ -62,7 +62,8 @@ def generate_hw04(question):
     Extracts score for a specified team from a given scoreboard image.
     Uses a structured prompt template and image input.
     """
-    json_format = '{"Result":{"score": <score>}}'
+    json_format = '{"Result":{"score": <score>} }'
+
     prompt_template = ChatPromptTemplate.from_messages([
         (
             'system',
