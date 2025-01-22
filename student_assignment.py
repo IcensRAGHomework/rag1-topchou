@@ -1,10 +1,11 @@
+import base64
+
 from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate, MessagesPlaceholder
 
 from model_configurations import get_model_configuration
 
 from langchain_openai import AzureChatOpenAI
 from langchain_core.messages import HumanMessage
-
 gpt_chat_version = 'gpt-4o'
 gpt_config = get_model_configuration(gpt_chat_version)
 
@@ -51,10 +52,36 @@ def generate_hw02(question):
     
 def generate_hw03(question2, question3):
     pass
-    
+
+
+def load_image(image_path):
+    with open(image_path, 'rb') as image_file:
+        return base64.b64encode(image_file.read()).decode("utf-8")
 def generate_hw04(question):
-    pass
-    
+    """
+    Extracts score for a specified team from a given scoreboard image.
+    Uses a structured prompt template and image input.
+    """
+    json_format = '{"Result":{"score": <score>}}'
+    prompt_template = ChatPromptTemplate.from_messages([
+        (
+            'system',
+            'You are a system tasked with analyzing a scoreboard. Return the result in JSON format as {json_format}.'
+        ),
+        (
+            'human', '{input}'
+        )
+    ])
+    # Bind the `json_format` parameter to the template
+    prompt_template = prompt_template.partial(json_format=json_format)
+    messages = prompt_template.format_prompt(input=question).to_messages()
+    messages.append(HumanMessage([{
+        'type': 'image_url',
+        'image_url': {'url': f'data:image/jpeg;base64,{load_image("./baseball.png")}'}
+    }]))
+    response = llm.invoke(messages)
+    return response.content
+
 # def demo(question):
 #     llm = AzureChatOpenAI(
 #             model=gpt_config['model_name'],
@@ -73,3 +100,6 @@ def generate_hw04(question):
 #
 #     return response
 print(generate_hw01('2024年台灣10月紀念日有哪些?'))
+
+
+print(generate_hw04('請問中華台北的積分是多少'))
