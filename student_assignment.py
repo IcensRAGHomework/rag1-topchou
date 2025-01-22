@@ -18,13 +18,7 @@ llm = AzureChatOpenAI(
 )
 examples = [{
         "input": "今年台灣10月紀念日有哪些?",
-        "output": """{
-            "Result": [
-                {
-                    "date": "2024-10-10",
-                    "name": "國慶日"
-                }
-            ]}"""}
+        "output": """{"Result": [{"date": "2024-10-10","name": "國慶日"}]}"""}
 ]
 
 example_prompt = ChatPromptTemplate.from_messages(
