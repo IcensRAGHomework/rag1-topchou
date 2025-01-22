@@ -1,6 +1,7 @@
 import base64
 
 from langchain.agents import create_openai_functions_agent, AgentExecutor
+from langchain_core.tools import tool
 from langchain_core.chat_history import BaseChatMessageHistory, InMemoryChatMessageHistory
 from langchain_core.prompts import ChatPromptTemplate, FewShotChatMessagePromptTemplate, MessagesPlaceholder
 
@@ -8,11 +9,10 @@ from model_configurations import get_model_configuration
 
 from langchain_openai import AzureChatOpenAI
 from langchain_core.messages import HumanMessage
+import requests
 
 gpt_chat_version = 'gpt-4o'
 gpt_config = get_model_configuration(gpt_chat_version)
-
-from tools import holiday_data
 
 llm = AzureChatOpenAI(
     model=gpt_config['model_name'],
@@ -55,15 +55,21 @@ def get_session(session_id: str) -> BaseChatMessageHistory:
     return history[session_id]
 
 
+def get_holiday(month):
+    api_url = f"https://calendarific.com/api/v2/holidays?&api_key=baa9dc110aa712sd3a9fa2a3dwb6c01d4c875950dc32vs&country=TW&year=2024&month={month}"
+    response = requests.get(api_url)
+    return response.json()
+
+
 def generate_hw01(question):
     chain = final_prompt | llm
     response = chain.invoke({"input": question})
 
     return response.content
 
-
+@tool
 def generate_hw02(question):
-    tools = [holiday_data]
+    tools = [get_holiday]
     agent = create_openai_functions_agent(
         llm=llm,
         prompt=final_prompt,
@@ -72,6 +78,7 @@ def generate_hw02(question):
     agent_executor = AgentExecutor(agent=agent, tools=tools)
     response = agent_executor.invoke({"input": question})
     return response["output"]
+
 
 def generate_hw03(question2, question3):
     pass
