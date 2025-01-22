@@ -42,9 +42,8 @@ final_prompt = ChatPromptTemplate.from_messages(
 )
 
 def generate_hw01(question):
-    response = llm.invoke([
-        HumanMessage(content=f"回答台灣 {question} 的紀念日有哪些，並使用 JSON 格式返回答案。")
-    ])
+    chain = final_prompt | llm
+    response = chain.invoke({"input": question})
 
     return response.content
 def generate_hw02(question):
